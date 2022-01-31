@@ -1,8 +1,8 @@
-import pygame, math, numba
+import pygame, math
 pygame.init()
 
 w, h = 600, 400
-sc = pygame.display.set_mode((w, h))
+sc = pygame.display.set_mode((w, h), pygame.SCALED)
 x_a = 0
 y_a = 0
 z_a = 0
@@ -50,15 +50,16 @@ c_pos = pygame.Vector3((50, 0, -50))
 a = 0
 ratio = w/h
 
-sun = pygame.Vector3((0, -1000, 0))
+sun = pygame.Vector3([0, -10000, 0])
+
 
 def raycast():
 	for x in range(-300, 300, res):
 		# z += 0.1
 		for y in range(-200, 200, res):
 			ray = pygame.Vector3((x*ratio, y*ratio, 1000))
-			ray = rotated_x(ray, x_a+math.cos(z/5)/100)
-			ray = rotated_y(ray, y_a+math.cos(z/5)/100)
+			ray = rotated_x(ray, x_a)
+			ray = rotated_y(ray, y_a)
 			rd = (c_pos + ray).normalize()
 			bright = rd.dot(sun.normalize())
 			if bright > 0:
@@ -75,20 +76,23 @@ def raycast():
 				is_inter = intersect(ray_point, sd, point, 10)
 				color = -sd.dot(sun.normalize())
 				if is_inter.x < 0:
-					color = sun.normalize().dot(pygame.Vector3((0, -1, 0)))
+					color = math.sin(ray_point.x/2) + math.cos(ray_point.z/2)
 					
-				pygame.draw.rect(sc, [max(color, 0.05)*255]*3, [x_d+x, y_d+y, res, res])
+					
+				pygame.draw.rect(sc, [min(max(color, 0)/(dist.y/100), 1)*255]*3, [x_d+x, y_d+y, res, res])
 			
 			dist = intersect(c_pos, rd, point, 10)
 			if dist.x > 0:
 				ray_point = c_pos + rd * dist.x
 				normal = ray_point - point 
 				if ray_point.y < 0 and c_pos.y <= 0:
-					color = sun.normalize().dot(ray_point.normalize())
+					color = math.sin(ray_point.y)
 					if color < 0:
 						color = 0
+					color = min(color, 0.5)
 					
-					pygame.draw.rect(sc, [color*255, color*100, color*10], [x_d+x, y_d+y, res, res])
+					
+					pygame.draw.rect(sc, [color*255, color*255, color*200], [x_d+x, y_d+y, res, res])
 
 
 
@@ -116,19 +120,23 @@ while True:
 	if keys[pygame.K_RIGHT]:
 		y_a += 0.1
 	if keys[pygame.K_a]:
-		c_pos.x -= 10/res
+		c_pos.z -= math.cos(y_a+90)
+		c_pos.x -= math.sin(y_a+90)
 	if keys[pygame.K_d]:
-		c_pos.x += 10/res
+		c_pos.z -= math.cos(y_a-90)
+		c_pos.x -= math.sin(y_a-90)
 	if keys[pygame.K_w]:
-		c_pos.z += 10/res
+		c_pos.z += math.cos(y_a)
+		c_pos.x += math.sin(y_a)
 	if keys[pygame.K_s]:
-		c_pos.z -= 10/res
+		c_pos.z -= math.cos(y_a)
+		c_pos.x -= math.sin(y_a)
 	if keys[pygame.K_LSHIFT]:
 		c_pos.y -= 1
 	if keys[pygame.K_LCTRL]:
 		c_pos.y += 1
 	if keys[pygame.K_1]:
-		res = 1
+		res = 2
 	if keys[pygame.K_2]:
 		res = 10
 
